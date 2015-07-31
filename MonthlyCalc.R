@@ -18,7 +18,7 @@ mortgage <- function(p, int = 0.04, term = 30, compound = 12, down = .20) {
 }
 
 payment <- function(p, int=.04, term=30, compound=12, down=.2, tax=p*.014, 
-                    hoa=300, ins=80, pmi=.005) {
+                    hoa=300) {
         
         ## tax = annual tax
         ## hoa = HomeOwners Association fees, monthly
@@ -27,8 +27,15 @@ payment <- function(p, int=.04, term=30, compound=12, down=.2, tax=p*.014,
         
         loan <- p - (p * down)
         
+        ins <- (p / 1000) * 2.7 / 12
+        
+        pmi <- if (down < .2) { (0.005 * loan) / 12
+        } 
+                else { 0
+                        }
+                
         tot <- mortgage(p, int, term, compound, down) + tax/12 + hoa + 
-                ins + (pmi*loan)/12
+                ins + pmi
         
         tot
 }
