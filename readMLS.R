@@ -10,8 +10,12 @@ readMLS <- function(id) {
                       regexpr("<div class=\"report-row-label.{0,12}\">.*</div>|<div class=\"report-row-label normalWrap.{0,10}\">.*</div>|<div class=\".{0,6}l report-row-label.{0,21}\">.*</div>", 
                               doc))
   
+  stage <- stage[!grepl("<label>:</label>", stage)]
+  
   stage[grepl("Kitch:", stage) & grepl("normalWrap", stage)] <- gsub("Kitch:", "KitchDesc:", 
                                                                      stage[grepl("Kitch:", stage) & grepl("normalWrap", stage)])
+  
+  stage[grepl("FHA55+:", stage, fixed = TRUE)] <- gsub("+", "", stage[grepl("FHA55+:", stage, fixed = TRUE)], fixed = TRUE)
   
   labs <- regmatches(stage, regexpr("<label>.+</label>", stage))
   labs <- gsub("<label>|</label>|&nbsp;", "", labs)
@@ -25,13 +29,25 @@ readMLS <- function(id) {
   vals <- vals[-1]
   
   df <- data.frame(labs, vals)
-  df <- df[df$labs != ":", ]
   df$labs <- gsub(":", "", df$labs)
   df$vals <- as.character(df$vals)
-
-  df <- spread(df, key = labs, value = vals)
-  df$reportId <- id
   
+  df$reportId <- id
+  df$rnum <- 1:nrow(df)
+  df$propertyId <- 0
+  
+  for (i in 1:(sum(df$labs == "MLS#")-1)) {
+          df$propertyId[df$propertyId == 0 & df$rnum < which(df$labs == "MLS#")[i+1]] <- i
+  }
+  
+  df$propertyId[df$propertyId == 0] <- sum(df$labs == "MLS#")
+  
+  df$propertyId <- paste(df$reportId, df$propertyId, sep = "_")
+  
+  df <- subset(df, select = -rnum)
+
+  df <- dcast(df, reportId + propertyId ~ labs, value.var = "vals")
+
   return(df)
       
 }       
