@@ -24,7 +24,8 @@ readMLS <- function(id) {
                 "", stage)
   
   vals <- paste(stage, collapse = "")
-  vals <- strsplit(vals, paste(labs, collapse = "|"))
+  vals <- gsub("\\s+", " ", vals)
+  vals <- strsplit(vals, paste(unique(labs), collapse = "|"))
   vals <- unlist(vals)
   vals <- vals[-1]
   
@@ -45,9 +46,11 @@ readMLS <- function(id) {
   df$propertyId <- paste(df$reportId, df$propertyId, sep = "_")
   
   df <- subset(df, select = -rnum)
+  
+  df <- df[!duplicated(df[ ,c("labs", "reportId", "propertyId")]), ]
 
   df <- dcast(df, reportId + propertyId ~ labs, value.var = "vals")
 
   return(df)
       
-}       
+}
