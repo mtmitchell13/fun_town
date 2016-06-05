@@ -7,8 +7,16 @@ readMLS <- function(id) {
   doc <- readLines(link, warn = FALSE, skipNul = TRUE)
   
   main <- regmatches(doc, regexpr("<div class=\"l town\">.+</div>|<div class=\"l address\">.+</div>", doc))
-  main <- gsub("<div class=\"l .{4,7}\">|</div>|&nbsp;", "", main)
-  main <- unlist(strsplit(main, "\\*"))
+  main <- gsub("<div class=\"l .{4,7}\">|</div>|&nbsp;|\\*|\\s\\(\\d+\\)", "", main)
+  main <- data.frame("Town", main)
+  names(main) <- c("labs", "vals")
+  main$labs <- as.character(main$labs)
+  main$vals <- as.character(main$vals)
+  main$labs[as.integer(row.names(main)) %% 2 == 0] <- "Address"
+  
+  main$reportId <- id
+  main$propertyId <- rep(1:(nrow(main)/2), each = 2)
+  main$propertyId <- paste(main$reportId, main$propertyId, sep = "_")
 
   
   stage <- regmatches(doc, 
@@ -53,6 +61,8 @@ readMLS <- function(id) {
   df <- subset(df, select = -rnum)
   
   df <- df[!duplicated(df[ ,c("labs", "reportId", "propertyId")]), ]
+  
+  df <- rbind(df, main)
 
   df <- dcast(df, reportId + propertyId ~ labs, value.var = "vals")
 
