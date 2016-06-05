@@ -6,6 +6,11 @@ readMLS <- function(id) {
   
   doc <- readLines(link, warn = FALSE, skipNul = TRUE)
   
+  main <- regmatches(doc, regexpr("<div class=\"l town\">.+</div>|<div class=\"l address\">.+</div>", doc))
+  main <- gsub("<div class=\"l .{4,7}\">|</div>|&nbsp;", "", main)
+  main <- unlist(strsplit(main, "\\*"))
+
+  
   stage <- regmatches(doc, 
                       regexpr("<div class=\"report-row-label.{0,12}\">.*</div>|<div class=\"report-row-label normalWrap.{0,10}\">.*</div>|<div class=\".{0,6}l report-row-label.{0,21}\">.*</div>", 
                               doc))
